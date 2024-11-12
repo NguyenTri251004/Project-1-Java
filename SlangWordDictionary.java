@@ -42,11 +42,19 @@ public class SlangWordDictionary {
 	public String searchSlangWord(String slangWord) {
 		return dictionary.getOrDefault(slangWord, "Từ không có trong từ điển!");
 	}
-//	public String sreachDefinition(String definition) {
-//		boolean flag = false;
-//		
-//		return dictionary.get
-//	}
+	public void sreachDefinition(String definition) {
+		boolean flag = false;
+		System.out.println("Ket qua tim kiem voi nghia: " + definition);
+		for (Map.Entry<String, String> entry : dictionary.entrySet()) {
+			if (entry.getValue().toLowerCase().contains(definition.toLowerCase())) {
+				System.out.println("Từ lóng: " + entry.getKey() + " - Nghĩa: " + entry.getValue());
+				flag = true;
+			}
+		}
+		if (!flag) {
+			System.out.println("Khong tim thay SlangWord nao co nghia la: " + definition);
+		}
+	}
 
 	public static void main(String[] args) {
 		SlangWordDictionary dic = new SlangWordDictionary();
