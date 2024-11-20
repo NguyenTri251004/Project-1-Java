@@ -3,10 +3,13 @@ package Project;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class SlangWordDictionary {
 	private HashMap<String, String> dictionary;
+	private ArrayList<String> searchHistory;
 
 	public HashMap<String, String> getDictionary() {
 		return dictionary;
@@ -14,6 +17,7 @@ public class SlangWordDictionary {
 
 	public SlangWordDictionary() {
 		dictionary = new HashMap<>();
+		searchHistory = new ArrayList<>();
 	}
 
 	public static void loadFromFile(String fileName, HashMap<String, String> dictionary) {
@@ -35,13 +39,15 @@ public class SlangWordDictionary {
 
 	public static void PrintDictionary(HashMap<String, String> dictionary) {
 		for (String key : dictionary.keySet()) {
-			System.out.println("Từ: " + key + " - Nghĩa: " + dictionary.get(key));
+			System.out.println("SlangWord: " + key + " - Nghia: " + dictionary.get(key));
 		}
 	}
 
 	public String searchSlangWord(String slangWord) {
-		return dictionary.getOrDefault(slangWord, "Từ không có trong từ điển!");
+		searchHistory.add(slangWord);
+		return dictionary.getOrDefault(slangWord, "SlangWord khong co trong tu dien!");
 	}
+
 	public void sreachDefinition(String definition) {
 		boolean flag = false;
 		System.out.println("Ket qua tim kiem voi nghia: " + definition);
@@ -56,10 +62,23 @@ public class SlangWordDictionary {
 		}
 	}
 
+	public void displaySearchHistory() {
+		System.out.println("Lich su tim kiem cua ban: ");
+		if (searchHistory.isEmpty()) {
+			System.out.println("Chua co tim kiem SlangWord nao!.");
+		} else {
+			for (String slang : searchHistory) {
+				System.out.println("- " + slang);
+			}
+		}
+	}
+
 	public static void main(String[] args) {
 		SlangWordDictionary dic = new SlangWordDictionary();
 		loadFromFile("slang.txt", dic.getDictionary());
 		System.out.println(dic.searchSlangWord("FIFO"));
+		System.out.println(dic.searchSlangWord("WOW"));
+		dic.displaySearchHistory();
 //		PrintDictionary(dic.getDictionary());
 	}
 }
