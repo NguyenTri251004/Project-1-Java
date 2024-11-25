@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class SlangWordDictionary {
 	private HashMap<String, String> dictionary;
@@ -53,7 +54,7 @@ public class SlangWordDictionary {
 		System.out.println("Ket qua tim kiem voi nghia: " + definition);
 		for (Map.Entry<String, String> entry : dictionary.entrySet()) {
 			if (entry.getValue().toLowerCase().contains(definition.toLowerCase())) {
-				System.out.println("Từ lóng: " + entry.getKey() + " - Nghĩa: " + entry.getValue());
+				System.out.println("SlangWord" + entry.getKey() + " - Nghia: " + entry.getValue());
 				flag = true;
 			}
 		}
@@ -73,12 +74,57 @@ public class SlangWordDictionary {
 		}
 	}
 
+	public void addSlangWord(String slangWord, String definition) {
+		Scanner scanner = new Scanner(System.in);
+		if (dictionary.containsKey(slangWord)) {
+			System.out.println("Slang word '" + slangWord + "' da ton tai voi nghia: " + dictionary.get(slangWord));
+			System.out.print("Ban co muon overwrite hay duplicate? (o/d): ");
+			String choice = scanner.nextLine().trim().toLowerCase();
+
+			if (choice.equals("o")) {
+				dictionary.put(slangWord, definition);
+				System.out.println("Slang word '" + slangWord + "' da duoc overwrite voi nghia moi!");
+			} else if (choice.equals("d")) {
+				String newKey = slangWord + "_new";
+				dictionary.put(newKey, definition);
+				System.out.println("Slang word" + newKey + "da duoc them.");
+			} else {
+				System.out.println("Huy thao tac.");
+			}
+		} else {
+			dictionary.put(slangWord, definition);
+			System.out.println("Slang word '" + slangWord + "' da duoc them moi.");
+		}
+		scanner.close();
+	}
+
+	public void editSlangWord(String slangWord, String newDefinition) {
+		if (dictionary.containsKey(slangWord)) {
+			dictionary.put(slangWord, newDefinition);
+			System.out.println("Slang word '" + slangWord + "' đã được cập nhật nghĩa mới.");
+		} else {
+			System.out.println("Slang word '" + slangWord + "' không tồn tại trong từ điển.");
+		}
+	}
+
 	public static void main(String[] args) {
+		Scanner scanner = new Scanner(System.in);
 		SlangWordDictionary dic = new SlangWordDictionary();
 		loadFromFile("slang.txt", dic.getDictionary());
-		System.out.println(dic.searchSlangWord("FIFO"));
-		System.out.println(dic.searchSlangWord("WOW"));
-		dic.displaySearchHistory();
-//		PrintDictionary(dic.getDictionary());
+		System.out.println("\n--- Thêm slang word ---");
+		System.out.print("Nhập slang word: ");
+		String newSlang = scanner.nextLine();
+		System.out.print("Nhập nghĩa: ");
+		String newDefinition = scanner.nextLine();
+		dic.addSlangWord(newSlang, newDefinition);
+
+		System.out.println("\n--- Chỉnh sửa slang word ---");
+		System.out.print("Nhập slang word muốn chỉnh sửa: ");
+		String editSlang = scanner.nextLine();
+		System.out.print("Nhập nghĩa mới: ");
+		String editDefinition = scanner.nextLine();
+		dic.editSlangWord(editSlang, editDefinition);
+		System.out.println(dic.searchSlangWord("hi"));
+		scanner.close();
 	}
 }
