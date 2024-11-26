@@ -1,130 +1,136 @@
 package Project;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SlangWordDictionary {
-	private HashMap<String, String> dictionary;
-	private ArrayList<String> searchHistory;
-
-	public HashMap<String, String> getDictionary() {
-		return dictionary;
-	}
+	private static HashMap<String, HashSet<String>> dictionary;
+	private static ArrayList<String> searchHistory;
 
 	public SlangWordDictionary() {
 		dictionary = new HashMap<>();
 		searchHistory = new ArrayList<>();
 	}
 
-	public static void loadFromFile(String fileName, HashMap<String, String> dictionary) {
-		try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-			String line = null;
+	public HashMap<String, HashSet<String>> getDictionary() {
+		return dictionary;
+	}
+
+	public static void loadFromFile(String fileName, HashMap<String, HashSet<String>> dictionary) {
+		try (BufferedReader reader = new BufferedReader(
+				new InputStreamReader(new FileInputStream(fileName), "UTF-8"))) {
+			String line;
 			while ((line = reader.readLine()) != null) {
-				String[] parts = line.split("`");
-				if (parts.length == 2) {
-					String key = parts[0].trim();
-					String meaning = parts[1].trim();
-					dictionary.put(key, meaning);
+				Pattern pattern = Pattern.compile("(.*?)`(.*)");
+				Matcher matcher = pattern.matcher(line);
+
+				if (matcher.find()) {
+					String slangWord = matcher.group(1).trim();
+					String[] meanings = matcher.group(2).split("\\|");
+
+					HashSet<String> definitionSet = new HashSet<>();
+					for (String meaning : meanings) {
+						definitionSet.add(meaning.trim());
+					}
+					dictionary.put(slangWord, definitionSet);
 				}
 			}
-			System.out.println("Danh sach duoc cap nhat tu slang.txt");
+			System.out.println("Danh sách từ điển đã được cập nhật từ file: " + fileName);
 		} catch (IOException e) {
-			System.out.println("Gap loi khi doc: " + e.getMessage());
+			System.out.println("Gặp lỗi khi đọc file: " + e.getMessage());
 		}
 	}
 
-	public static void PrintDictionary(HashMap<String, String> dictionary) {
-		for (String key : dictionary.keySet()) {
-			System.out.println("SlangWord: " + key + " - Nghia: " + dictionary.get(key));
+	public static void printDictionary(HashMap<String, HashSet<String>> dictionary) {
+		for (Map.Entry<String, HashSet<String>> entry : dictionary.entrySet()) {
+			System.out.println("SlangWord: " + entry.getKey() + " có nghĩa là: " + entry.getValue());
 		}
 	}
 
-	public String searchSlangWord(String slangWord) {
+	public static String searchSlangWord(String slangWord) {
 		searchHistory.add(slangWord);
-		return dictionary.getOrDefault(slangWord, "SlangWord khong co trong tu dien!");
+		if (dictionary.containsKey(slangWord)) {
+			return "SlangWord: " + slangWord + " có nghĩa là: " + dictionary.get(slangWord);
+		} else {
+			return "SlangWord không có trong từ điển!";
+		}
 	}
 
-	public void sreachDefinition(String definition) {
+	public static void searchDefinition(String definition) {
 		boolean flag = false;
-		System.out.println("Ket qua tim kiem voi nghia: " + definition);
-		for (Map.Entry<String, String> entry : dictionary.entrySet()) {
-			if (entry.getValue().toLowerCase().contains(definition.toLowerCase())) {
-				System.out.println("SlangWord" + entry.getKey() + " - Nghia: " + entry.getValue());
-				flag = true;
+		System.out.println("Kết quả tìm kiếm được với nghĩa: " + definition);
+		for (Map.Entry<String, HashSet<String>> entry : dictionary.entrySet()) {
+			for (String meaning : entry.getValue()) {
+				if (meaning.toLowerCase().contains(definition.toLowerCase())) {
+					System.out.println("SlangWord: " + entry.getKey() + " - có nghĩa là: " + entry.getValue());
+					flag = true;
+				}
 			}
 		}
 		if (!flag) {
-			System.out.println("Khong tim thay SlangWord nao co nghia la: " + definition);
+			System.out.println("Không tìm thấy SlangWord nào có nghĩa là: " + definition);
 		}
 	}
 
-	public void displaySearchHistory() {
-		System.out.println("Lich su tim kiem cua ban: ");
+	public static void displaySearchHistory() {
+		System.out.println("Lịch sử tìm kiếm của bạn: ");
 		if (searchHistory.isEmpty()) {
-			System.out.println("Chua co tim kiem SlangWord nao!.");
+			System.out.println("Chưa có tìm kiếm SlangWord nào!.");
 		} else {
 			for (String slang : searchHistory) {
 				System.out.println("- " + slang);
 			}
 		}
 	}
+	public void addSlangWord(String slangWord, String newDefinition) {
+	    Scanner scanner = new Scanner(System.in);
 
-	public void addSlangWord(String slangWord, String definition) {
-		Scanner scanner = new Scanner(System.in);
-		if (dictionary.containsKey(slangWord)) {
-			System.out.println("Slang word '" + slangWord + "' da ton tai voi nghia: " + dictionary.get(slangWord));
-			System.out.print("Ban co muon overwrite hay duplicate? (o/d): ");
-			String choice = scanner.nextLine().trim().toLowerCase();
+	    if (dictionary.containsKey(slangWord)) {
+	        System.out.println(slangWord + " đã tồn tại với các nghĩa: " + dictionary.get(slangWord));
+	        System.out.print("Bạn muốn overwrite hay duplicate? (o/d): ");
+	        String choice = scanner.nextLine().trim().toLowerCase();
 
-			if (choice.equals("o")) {
-				dictionary.put(slangWord, definition);
-				System.out.println("Slang word '" + slangWord + "' da duoc overwrite voi nghia moi!");
-			} else if (choice.equals("d")) {
-				String newKey = slangWord + "_new";
-				dictionary.put(newKey, definition);
-				System.out.println("Slang word" + newKey + "da duoc them.");
-			} else {
-				System.out.println("Huy thao tac.");
-			}
-		} else {
-			dictionary.put(slangWord, definition);
-			System.out.println("Slang word '" + slangWord + "' da duoc them moi.");
-		}
-		scanner.close();
+	        if (choice.equals("o")) {
+	            HashSet<String> newDefinitions = new HashSet<>();
+	            newDefinitions.add(newDefinition.trim());
+	            dictionary.put(slangWord, newDefinitions);
+	            System.out.println(slangWord + " đã được overwrite với nghĩa mới!");
+	        } else if (choice.equals("d")) {
+	            dictionary.get(slangWord).add(newDefinition.trim());
+	            System.out.println("Nghĩa mới đã được thêm vào " + slangWord + ".");
+	        } else {
+	            System.out.println("Hủy thao tác.");
+	        }
+	    } else {
+	        HashSet<String> definitions = new HashSet<>();
+	        definitions.add(newDefinition.trim());
+	        dictionary.put(slangWord, definitions);
+	        System.out.println("Slang word '" + slangWord + "' đã được thêm mới.");
+	    }
+	    scanner.close();
 	}
-
-	public void editSlangWord(String slangWord, String newDefinition) {
-		if (dictionary.containsKey(slangWord)) {
-			dictionary.put(slangWord, newDefinition);
-			System.out.println("Slang word '" + slangWord + "' đã được cập nhật nghĩa mới.");
-		} else {
-			System.out.println("Slang word '" + slangWord + "' không tồn tại trong từ điển.");
-		}
-	}
+//	public void editSlangWord(String slangWord, String newDefinition) {
+//		if (dictionary.containsKey(slangWord)) {
+//			dictionary.put(slangWord, newDefinition);
+//			System.out.println("Slang word '" + slangWord + "' đã được cập nhật nghĩa mới.");
+//		} else {
+//			System.out.println("Slang word '" + slangWord + "' không tồn tại trong từ điển.");
+//		}
+//	}
 
 	public static void main(String[] args) {
-		Scanner scanner = new Scanner(System.in);
 		SlangWordDictionary dic = new SlangWordDictionary();
 		loadFromFile("slang.txt", dic.getDictionary());
-		System.out.println("\n--- Thêm slang word ---");
-		System.out.print("Nhập slang word: ");
-		String newSlang = scanner.nextLine();
-		System.out.print("Nhập nghĩa: ");
-		String newDefinition = scanner.nextLine();
-		dic.addSlangWord(newSlang, newDefinition);
-
-		System.out.println("\n--- Chỉnh sửa slang word ---");
-		System.out.print("Nhập slang word muốn chỉnh sửa: ");
-		String editSlang = scanner.nextLine();
-		System.out.print("Nhập nghĩa mới: ");
-		String editDefinition = scanner.nextLine();
-		dic.editSlangWord(editSlang, editDefinition);
-		System.out.println(dic.searchSlangWord("hi"));
-		scanner.close();
+//		printDictionary(dic.dictionary);
+		searchDefinition("An");
 	}
 }
