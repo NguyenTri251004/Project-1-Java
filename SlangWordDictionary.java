@@ -1,17 +1,8 @@
 package Project;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
 
 public class SlangWordDictionary {
 	private static HashMap<String, HashSet<String>> dictionary;
@@ -22,11 +13,15 @@ public class SlangWordDictionary {
 		searchHistory = new ArrayList<>();
 	}
 
-	public HashMap<String, HashSet<String>> getDictionary() {
+	public static HashMap<String, HashSet<String>> getDictionary() {
 		return dictionary;
 	}
 
-	public static void loadFromFile(String fileName, HashMap<String, HashSet<String>> dictionary) {
+	public static ArrayList<String> getSearchHistory() {
+		return searchHistory;
+	}
+
+	public void loadFromFile(String fileName, HashMap<String, HashSet<String>> dictionary) {
 		try (BufferedReader reader = new BufferedReader(
 				new InputStreamReader(new FileInputStream(fileName), "UTF-8"))) {
 			String line;
@@ -66,59 +61,25 @@ public class SlangWordDictionary {
 		}
 	}
 
-	public static void searchDefinition(String definition) {
-		boolean flag = false;
-		System.out.println("Kết quả tìm kiếm được với nghĩa: " + definition);
+	public static String searchDefinition(String definition) {
+		boolean found = false;
+		StringBuilder results = new StringBuilder();
+		results.append("Kết quả tìm kiếm được với nghĩa: ").append(definition).append("\n");
+
 		for (Map.Entry<String, HashSet<String>> entry : dictionary.entrySet()) {
 			for (String meaning : entry.getValue()) {
 				if (meaning.toLowerCase().contains(definition.toLowerCase())) {
-					System.out.println("SlangWord: " + entry.getKey() + " - có nghĩa là: " + entry.getValue());
-					flag = true;
+					results.append("SlangWord: ").append(entry.getKey()).append(" - Nghĩa: ").append(meaning)
+							.append("\n");
+					found = true;
 				}
 			}
 		}
-		if (!flag) {
-			System.out.println("Không tìm thấy SlangWord nào có nghĩa là: " + definition);
+		if (!found) {
+			results.append("Không tìm thấy SlangWord nào có nghĩa là: ").append(definition);
 		}
-	}
 
-	public static void displaySearchHistory() {
-		System.out.println("Lịch sử tìm kiếm của bạn: ");
-		if (searchHistory.isEmpty()) {
-			System.out.println("Chưa có tìm kiếm SlangWord nào!.");
-		} else {
-			for (String slang : searchHistory) {
-				System.out.println("- " + slang);
-			}
-		}
-	}
-
-	public void addSlangWord(String slangWord, String newDefinition) {
-		Scanner scanner = new Scanner(System.in);
-
-		if (dictionary.containsKey(slangWord)) {
-			System.out.println(slangWord + " đã tồn tại với các nghĩa: " + dictionary.get(slangWord));
-			System.out.print("Bạn muốn overwrite hay duplicate? (o/d): ");
-			String choice = scanner.nextLine().trim().toLowerCase();
-
-			if (choice.equals("o")) {
-				HashSet<String> newDefinitions = new HashSet<>();
-				newDefinitions.add(newDefinition.trim());
-				dictionary.put(slangWord, newDefinitions);
-				System.out.println(slangWord + " đã được overwrite với nghĩa mới!");
-			} else if (choice.equals("d")) {
-				dictionary.get(slangWord).add(newDefinition.trim());
-				System.out.println("Nghĩa mới đã được thêm vào " + slangWord + ".");
-			} else {
-				System.out.println("Hủy thao tác.");
-			}
-		} else {
-			HashSet<String> definitions = new HashSet<>();
-			definitions.add(newDefinition.trim());
-			dictionary.put(slangWord, definitions);
-			System.out.println("Slang word '" + slangWord + "' đã được thêm mới.");
-		}
-		scanner.close();
+		return results.toString();
 	}
 
 	public void editSlangWord(String slangWord) {
@@ -152,28 +113,6 @@ public class SlangWordDictionary {
 		}
 	}
 
-	public void deleteSlangWord(String slangWord) {
-		if (dictionary.containsKey(slangWord)) {
-			System.out.println("Slang word " + slangWord + " có các nghĩa:");
-			HashSet<String> definitions = dictionary.get(slangWord);
-			for (String definition : definitions) {
-				System.out.println("- " + definition);
-			}
-			Scanner scanner = new Scanner(System.in);
-			System.out.print("Bạn có chắc chắn muốn xóa từ này không? (y/n): ");
-			String confirm = scanner.nextLine().trim().toLowerCase();
-
-			if (confirm.equals("y")) {
-				dictionary.remove(slangWord);
-				System.out.println("Slang word " + slangWord + " đã được xóa khỏi từ điển.");
-			} else {
-				System.out.println("Hủy thao tác xóa.");
-			}
-		} else {
-			System.out.println("Slang word '" + slangWord + "' không tồn tại trong từ điển.");
-		}
-	}
-
 	public void resetToOriginal(String fileName) {
 		try {
 			dictionary.clear();
@@ -184,24 +123,22 @@ public class SlangWordDictionary {
 		}
 	}
 
-	public void randomSlangWord() {
+	public String randomSlangWord() {
 		if (dictionary.isEmpty()) {
-			System.out.println("Danh sách Slang Words rỗng.");
-			return;
+			return "Danh sách Slang Words rỗng.";
 		}
 		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
 		int randomIndex = (int) (Math.random() * keys.size());
 		String randomSlang = keys.get(randomIndex);
 		HashSet<String> definitions = dictionary.get(randomSlang);
-		System.out.println("Slang word được random: " + randomSlang);
-		System.out.println("Nghĩa: " + String.join(", ", definitions));
+		return "Slang word được random: " + randomSlang + "\nNghĩa: " + String.join(", ", definitions);
 	}
 
-	public void randomQuizSlangWord() {
+	public String randomQuizSlangWord() {
 		if (dictionary.isEmpty()) {
-			System.out.println("Danh sách Slang Words hiện đang trống.");
-			return;
+			return "Danh sách Slang Words hiện đang trống.";
 		}
+
 		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
 		int questionIndex = (int) (Math.random() * keys.size());
 		String questionSlang = keys.get(questionIndex);
@@ -219,22 +156,23 @@ public class SlangWordDictionary {
 				options.add(randomDefinition);
 			}
 		}
+
 		Collections.shuffle(options);
-		System.out.println("Slang word: " + questionSlang);
-		System.out.println("Định nghĩa đúng cho từ này là?");
-		for (int i = 0; i < options.size(); i++) {
-			System.out.println((i + 1) + ". " + options.get(i));
+
+		StringBuilder quizQuestion = new StringBuilder();
+		quizQuestion.append("Slang word: " + questionSlang + "\n");
+		for (String option : options) {
+			quizQuestion.append(option + "\n");
 		}
 
-		Scanner scanner = new Scanner(System.in);
-		System.out.print("Nhập số đáp án của bạn (1-4): ");
-		int userAnswer = scanner.nextInt();
+		return quizQuestion.toString();
+	}
 
-		if (userAnswer >= 1 && userAnswer <= 4 && options.get(userAnswer - 1).equals(correctAnswer)) {
-			System.out.println("Chính xác! Đáp án là: " + correctAnswer);
-		} else {
-			System.out.println("Sai rồi! Đáp án đúng là: " + correctAnswer);
+	public String getCorrectAnswer(String slangWord) {
+		if (dictionary.containsKey(slangWord)) {
+			return new ArrayList<>(dictionary.get(slangWord)).get(0);
 		}
+		return "";
 	}
 
 	public void randomQuizDefinition() {
@@ -271,13 +209,9 @@ public class SlangWordDictionary {
 			System.out.println("Sai rồi! Slang word đúng là: " + correctSlang);
 		}
 	}
-
-	public static void main(String[] args) {
-		SlangWordDictionary dic = new SlangWordDictionary();
-		loadFromFile("slang.txt", dic.getDictionary());
-//		printDictionary(dic.dictionary);
-//		dic.editSlangWord(">.<");
-//		System.out.println(dic.searchSlangWord(">.<"));
-		dic.randomQuizDefinition();
-	}
+//	public static void main(String[] args) {
+//		SlangWordDictionary dic = new SlangWordDictionary();
+//		loadFromFile("slang.txt", dic.getDictionary());
+//		dic.randomQuizDefinition();
+//	}
 }
