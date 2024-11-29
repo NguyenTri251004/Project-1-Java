@@ -10,6 +10,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Map;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -26,8 +27,6 @@ import javax.swing.SwingUtilities;
 public class SlangWordApp extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private SlangWordDictionary dic;
-	private String question = "";
-	private String[] options = new String[4];
 
 	public SlangWordApp() {
 		dic = new SlangWordDictionary();
@@ -43,7 +42,7 @@ public class SlangWordApp extends JFrame {
 		JTabbedPane tabbedPane = new JTabbedPane();
 
 		// Tab 1: Search
-		tabbedPane.add("Search", createSearchPanel());
+		tabbedPane.add("Tìm kiếm", createSearchPanel());
 
 		// Tab 2: Lịch sử tìm kiếm
 		tabbedPane.add("Lịch sử tìm kiếm", createHistoryPanel());
@@ -64,10 +63,10 @@ public class SlangWordApp extends JFrame {
 		tabbedPane.add("Random", createRandomPanel());
 
 		// Tab 8: Đố vui - Slang Word
-//		tabbedPane.add("Đố vui Slang Word", createQuizSlangPanel());
-//
-//		// Tab 10: Đố vui - Definition
-//		tabbedPane.add("Đố vui Definition", createQuizDefinitionPanel());
+		tabbedPane.add("Đố vui Slang Word", createQuizSlangPanel());
+
+		// Tab 10: Đố vui - Definition
+		tabbedPane.add("Đố vui Definition", createQuizDefinitionPanel());
 
 		add(tabbedPane, BorderLayout.CENTER);
 	}
@@ -426,9 +425,177 @@ public class SlangWordApp extends JFrame {
 		return panel;
 	}
 
-//	private JPanel createQuizSlangPanel() {
-//		return panel;
-//	}
+	private JPanel createQuizSlangPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+		JTextArea quizArea = new JTextArea(8, 30);
+		quizArea.setEditable(false);
+		quizArea.setLineWrap(true);
+		quizArea.setWrapStyleWord(true);
+		JScrollPane scrollPane = new JScrollPane(quizArea);
+
+		JTextField inputField = new JTextField(10);
+		inputField.setMaximumSize(new Dimension(Integer.MAX_VALUE, inputField.getPreferredSize().height));
+		inputField.setEnabled(false);
+
+		JButton startQuizButton = new JButton("Bắt đầu Quiz");
+
+		panel.add(scrollPane);
+		panel.add(new JLabel("Nhập số đáp án (1-4):"));
+		panel.add(inputField);
+		panel.add(startQuizButton);
+
+		startQuizButton.addActionListener(e -> {
+			String slangWord = dic.getRandomSlangWord();
+			Map<String, Integer> quizData = dic.randomQuizDefinitions(slangWord);
+
+			if (quizData == null || quizData.isEmpty()) {
+				quizArea.setText("Không thể tạo câu hỏi. Từ điển rỗng hoặc slang word không hợp lệ.");
+				return;
+			}
+
+			quizArea.setText("Slang word: " + slangWord + "\nChọn định nghĩa đúng:");
+			ArrayList<Map.Entry<String, Integer>> entries = new ArrayList<>(quizData.entrySet());
+			for (int i = 0; i < entries.size(); i++) {
+				quizArea.append("\n" + (i + 1) + ". " + entries.get(i).getKey());
+			}
+
+			inputField.setEnabled(true);
+			inputField.putClientProperty("quizData", quizData);
+			inputField.putClientProperty("entries", entries);
+		});
+
+		inputField.addActionListener(ae -> {
+			try {
+				@SuppressWarnings("unchecked")
+				Map<String, Integer> quizData = (Map<String, Integer>) inputField.getClientProperty("quizData");
+				@SuppressWarnings("unchecked")
+				ArrayList<Map.Entry<String, Integer>> entries = (ArrayList<Map.Entry<String, Integer>>) inputField
+						.getClientProperty("entries");
+
+				if (quizData == null || entries == null) {
+					quizArea.append("\n\nVui lòng nhấn 'Bắt đầu Quiz' để tạo câu hỏi mới.");
+					return;
+				}
+
+				int userAnswer = Integer.parseInt(inputField.getText().trim());
+
+				if (userAnswer < 1 || userAnswer > 4) {
+					quizArea.append("\n\nVui lòng nhập một số từ 1 đến 4.");
+				} else {
+					String correctAnswer = null;
+					for (Map.Entry<String, Integer> entry : quizData.entrySet()) {
+						if (entry.getValue() == 1) {
+							correctAnswer = entry.getKey();
+							break;
+						}
+					}
+
+					String selectedAnswer = entries.get(userAnswer - 1).getKey();
+					if (selectedAnswer.equals(correctAnswer)) {
+						quizArea.append("\n\nChính xác! Đáp án đúng là: " + correctAnswer);
+					} else {
+						quizArea.append("\n\nSai rồi! Đáp án đúng là: " + correctAnswer);
+					}
+
+					inputField.setEnabled(false);
+				}
+			} catch (NumberFormatException ex) {
+				quizArea.append("\n\nVui lòng nhập một số hợp lệ.");
+			}
+
+			inputField.setText("");
+		});
+
+		return panel;
+	}
+
+	private JPanel createQuizDefinitionPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+
+		JTextArea quizArea = new JTextArea(8, 30);
+		quizArea.setEditable(false);
+		quizArea.setLineWrap(true);
+		quizArea.setWrapStyleWord(true);
+		JScrollPane scrollPane = new JScrollPane(quizArea);
+
+		JTextField inputField = new JTextField(10);
+		inputField.setMaximumSize(new Dimension(Integer.MAX_VALUE, inputField.getPreferredSize().height));
+		inputField.setEnabled(false);
+
+		JButton startQuizButton = new JButton("Bắt đầu Quiz");
+
+		panel.add(scrollPane);
+		panel.add(new JLabel("Nhập số đáp án (1-4):"));
+		panel.add(inputField);
+		panel.add(startQuizButton);
+
+		startQuizButton.addActionListener(e -> {
+			String randomDefinition = dic.getRandomDefinition();
+			Map<String, Integer> quizData = dic.randomQuizSlangs(randomDefinition);
+
+			if (quizData == null || quizData.isEmpty()) {
+				quizArea.setText("Không thể tạo câu hỏi. Từ điển rỗng hoặc definition không hợp lệ.");
+				return;
+			}
+
+			quizArea.setText("Definition: " + randomDefinition + "\nChọn slang word đúng:");
+			ArrayList<Map.Entry<String, Integer>> entries = new ArrayList<>(quizData.entrySet());
+			for (int i = 0; i < entries.size(); i++) {
+				quizArea.append("\n" + (i + 1) + ". " + entries.get(i).getKey());
+			}
+
+			inputField.setEnabled(true);
+			inputField.putClientProperty("quizData", quizData);
+			inputField.putClientProperty("entries", entries);
+		});
+
+		inputField.addActionListener(ae -> {
+			try {
+				@SuppressWarnings("unchecked")
+				Map<String, Integer> quizData = (Map<String, Integer>) inputField.getClientProperty("quizData");
+				@SuppressWarnings("unchecked")
+				ArrayList<Map.Entry<String, Integer>> entries = (ArrayList<Map.Entry<String, Integer>>) inputField
+						.getClientProperty("entries");
+
+				if (quizData == null || entries == null) {
+					quizArea.append("\n\nVui lòng nhấn 'Bắt đầu Quiz' để tạo câu hỏi mới.");
+					return;
+				}
+
+				int userAnswer = Integer.parseInt(inputField.getText().trim());
+
+				if (userAnswer < 1 || userAnswer > 4) {
+					quizArea.append("\n\nVui lòng nhập một số từ 1 đến 4.");
+				} else {
+					String correctAnswer = null;
+					for (Map.Entry<String, Integer> entry : quizData.entrySet()) {
+						if (entry.getValue() == 1) {
+							correctAnswer = entry.getKey();
+							break;
+						}
+					}
+
+					String selectedAnswer = entries.get(userAnswer - 1).getKey();
+					if (selectedAnswer.equals(correctAnswer)) {
+						quizArea.append("\n\nChính xác! Đáp án đúng là: " + correctAnswer);
+					} else {
+						quizArea.append("\n\nSai rồi! Đáp án đúng là: " + correctAnswer);
+					}
+
+					inputField.setEnabled(false);
+				}
+			} catch (NumberFormatException ex) {
+				quizArea.append("\n\nVui lòng nhập một số hợp lệ.");
+			}
+
+			inputField.setText("");
+		});
+
+		return panel;
+	}
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {

@@ -1,8 +1,18 @@
 package Project;
 
-import java.io.*;
-import java.util.*;
-import java.util.regex.*;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SlangWordDictionary {
 	private static HashMap<String, HashSet<String>> dictionary;
@@ -82,37 +92,6 @@ public class SlangWordDictionary {
 		return results.toString();
 	}
 
-	public void editSlangWord(String slangWord) {
-		if (dictionary.containsKey(slangWord)) {
-			HashSet<String> definitions = dictionary.get(slangWord);
-			System.out.println("Slang word '" + slangWord + "' có các nghĩa sau:");
-			int index = 1;
-			ArrayList<String> definitionList = new ArrayList<>(definitions);
-			for (String def : definitionList) {
-				System.out.println(index + ". " + def);
-				index++;
-			}
-			Scanner scanner = new Scanner(System.in);
-			System.out.print("Chọn số thứ tự của nghĩa bạn muốn chỉnh sửa (hoặc 0 để hủy): ");
-			int choice = scanner.nextInt();
-			scanner.nextLine();
-
-			if (choice > 0 && choice <= definitionList.size()) {
-				System.out.print("Nhập nghĩa mới: ");
-				String newDefinition = scanner.nextLine().trim();
-				definitions.remove(definitionList.get(choice - 1));
-				definitions.add(newDefinition);
-				System.out.println("Nghĩa đã được cập nhật thành: " + newDefinition);
-			} else if (choice == 0) {
-				System.out.println("Hủy thao tác chỉnh sửa.");
-			} else {
-				System.out.println("Lựa chọn không hợp lệ.");
-			}
-		} else {
-			System.out.println("Slang word '" + slangWord + "' không tồn tại trong từ điển.");
-		}
-	}
-
 	public void resetToOriginal(String fileName) {
 		try {
 			dictionary.clear();
@@ -134,84 +113,110 @@ public class SlangWordDictionary {
 		return "Slang word được random: " + randomSlang + "\nNghĩa: " + String.join(", ", definitions);
 	}
 
-	public String randomQuizSlangWord() {
+	public String getRandomSlangWord() {
 		if (dictionary.isEmpty()) {
-			return "Danh sách Slang Words hiện đang trống.";
+			return null;
 		}
-
 		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
-		int questionIndex = (int) (Math.random() * keys.size());
-		String questionSlang = keys.get(questionIndex);
-		HashSet<String> correctDefinitions = dictionary.get(questionSlang);
-		String correctAnswer = new ArrayList<>(correctDefinitions).get(0);
-		ArrayList<String> options = new ArrayList<>();
-		options.add(correctAnswer);
-
-		while (options.size() < 4) {
-			int randomIndex = (int) (Math.random() * keys.size());
-			String randomSlang = keys.get(randomIndex);
-			HashSet<String> randomDefinitions = dictionary.get(randomSlang);
-			String randomDefinition = new ArrayList<>(randomDefinitions).get(0);
-			if (!options.contains(randomDefinition)) {
-				options.add(randomDefinition);
-			}
-		}
-
-		Collections.shuffle(options);
-
-		StringBuilder quizQuestion = new StringBuilder();
-		quizQuestion.append("Slang word: " + questionSlang + "\n");
-		for (String option : options) {
-			quizQuestion.append(option + "\n");
-		}
-
-		return quizQuestion.toString();
+		int randomIndex = (int) (Math.random() * keys.size());
+		return keys.get(randomIndex);
 	}
 
-	public String getCorrectAnswer(String slangWord) {
-		if (dictionary.containsKey(slangWord)) {
-			return new ArrayList<>(dictionary.get(slangWord)).get(0);
-		}
-		return "";
-	}
-
-	public void randomQuizDefinition() {
+	public Map<String, Integer> randomQuizDefinitions(String slangWord) {
 		if (dictionary.isEmpty()) {
 			System.out.println("Danh sách Slang Words hiện đang trống.");
-			return;
+			return null;
 		}
-		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
-		int questionIndex = (int) (Math.random() * keys.size());
-		String correctSlang = keys.get(questionIndex);
-		HashSet<String> correctDefinitions = dictionary.get(correctSlang);
-		String questionDefinition = new ArrayList<>(correctDefinitions).get(0);
-		ArrayList<String> options = new ArrayList<>();
-		options.add(correctSlang);
-		while (options.size() < 4) {
-			int randomIndex = (int) (Math.random() * keys.size());
-			String randomSlang = keys.get(randomIndex);
-			if (!options.contains(randomSlang)) {
-				options.add(randomSlang);
+
+		if (!dictionary.containsKey(slangWord)) {
+			System.out.println("Slang word '" + slangWord + "' không tồn tại trong từ điển.");
+			return null;
+		}
+
+		HashSet<String> correctDefinitions = dictionary.get(slangWord);
+		String correctDefinition = new ArrayList<>(correctDefinitions).get(0);
+
+		ArrayList<String> allDefinitions = new ArrayList<>();
+		for (HashSet<String> defs : dictionary.values()) {
+			allDefinitions.addAll(defs);
+		}
+
+		Map<String, Integer> quizMap = new LinkedHashMap<>();
+		quizMap.put(correctDefinition, 1);
+
+		while (quizMap.size() < 4) {
+			int randomIndex = (int) (Math.random() * allDefinitions.size());
+			String randomDefinition = allDefinitions.get(randomIndex);
+
+			if (!quizMap.containsKey(randomDefinition)) {
+				quizMap.put(randomDefinition, 0);
 			}
 		}
-		Collections.shuffle(options);
-		System.out.println("Định nghĩa: " + questionDefinition);
-		System.out.println("Slang word nào có nghĩa trên?");
-		for (int i = 0; i < options.size(); i++) {
-			System.out.println((i + 1) + ". " + options.get(i));
+
+		List<Map.Entry<String, Integer>> entryList = new ArrayList<>(quizMap.entrySet());
+		Collections.shuffle(entryList);
+
+		Map<String, Integer> shuffledQuizMap = new LinkedHashMap<>();
+		for (Map.Entry<String, Integer> entry : entryList) {
+			shuffledQuizMap.put(entry.getKey(), entry.getValue());
 		}
-		Scanner scanner = new Scanner(System.in);
-		System.out.print("Nhập số đáp án của bạn (1-4): ");
-		int userAnswer = scanner.nextInt();
-		if (userAnswer >= 1 && userAnswer <= 4 && options.get(userAnswer - 1).equals(correctSlang)) {
-			System.out.println("Chính xác! Slang word là: " + correctSlang);
-		} else {
-			System.out.println("Sai rồi! Slang word đúng là: " + correctSlang);
-		}
+
+		return shuffledQuizMap;
 	}
-//	public static void main(String[] args) {
-//		SlangWordDictionary dic = new SlangWordDictionary();
-//		loadFromFile("slang.txt", dic.getDictionary());
-//		dic.randomQuizDefinition();
-//	}
+
+	public String getRandomDefinition() {
+		if (dictionary.isEmpty()) {
+			return null;
+		}
+
+		ArrayList<String> allDefinitions = new ArrayList<>();
+		for (HashSet<String> definitions : dictionary.values()) {
+			allDefinitions.addAll(definitions);
+		}
+
+		int randomIndex = (int) (Math.random() * allDefinitions.size());
+		return allDefinitions.get(randomIndex);
+	}
+
+	public Map<String, Integer> randomQuizSlangs(String definition) {
+		Map<String, Integer> quizData = new LinkedHashMap<>();
+
+		if (dictionary.isEmpty() || definition == null || definition.isEmpty()) {
+			return quizData;
+		}
+
+		String correctSlang = null;
+		for (Map.Entry<String, HashSet<String>> entry : dictionary.entrySet()) {
+			if (entry.getValue().contains(definition)) {
+				correctSlang = entry.getKey();
+				break;
+			}
+		}
+
+		if (correctSlang == null) {
+			return quizData;
+		}
+
+		quizData.put(correctSlang, 1);
+
+		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
+		while (quizData.size() < 4) {
+			int randomIndex = (int) (Math.random() * keys.size());
+			String randomSlang = keys.get(randomIndex);
+
+			if (!quizData.containsKey(randomSlang)) {
+				quizData.put(randomSlang, 0);
+			}
+		}
+
+		List<Map.Entry<String, Integer>> entries = new ArrayList<>(quizData.entrySet());
+		Collections.shuffle(entries);
+
+		Map<String, Integer> shuffledQuizData = new LinkedHashMap<>();
+		for (Map.Entry<String, Integer> entry : entries) {
+			shuffledQuizData.put(entry.getKey(), entry.getValue());
+		}
+
+		return shuffledQuizData;
+	}
 }
