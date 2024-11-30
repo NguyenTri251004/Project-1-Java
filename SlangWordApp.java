@@ -1,28 +1,9 @@
 package Project;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTextArea;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import javax.swing.*;
 
 public class SlangWordApp extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -38,35 +19,25 @@ public class SlangWordApp extends JFrame {
 		setLocationRelativeTo(null);
 		setLayout(new BorderLayout());
 
-		// Tab panel
 		JTabbedPane tabbedPane = new JTabbedPane();
 
-		// Tab 1: Search
 		tabbedPane.add("Tìm kiếm", createSearchPanel());
 
-		// Tab 2: Lịch sử tìm kiếm
 		tabbedPane.add("Lịch sử tìm kiếm", createHistoryPanel());
 
-		// Tab 3: Thêm Slang Word mới
 		tabbedPane.add("Thêm", createAddSlangPanel());
 
-		// Tab 4: Sửa Slang Word
 		tabbedPane.add("Sửa", createEditSlangPanel());
 
-		// Tab 5: Xóa Slang Word
 		tabbedPane.add("Xóa", createDeleteSlangPanel());
 
-		// Tab 6: Reset danh sách
 		tabbedPane.add("Reset", createResetPanel());
 
-		// Tab 7: Random Slang Word
 		tabbedPane.add("Random", createRandomPanel());
 
-		// Tab 8: Đố vui - Slang Word
-		tabbedPane.add("Đố vui Slang Word", createQuizSlangPanel());
+		tabbedPane.add("Quiz Slang Word", createQuizSlangPanel());
 
-		// Tab 10: Đố vui - Definition
-		tabbedPane.add("Đố vui Definition", createQuizDefinitionPanel());
+		tabbedPane.add("Quiz định nghĩa", createQuizDefinitionPanel());
 
 		add(tabbedPane, BorderLayout.CENTER);
 	}
@@ -448,33 +419,33 @@ public class SlangWordApp extends JFrame {
 
 		startQuizButton.addActionListener(e -> {
 			String slangWord = dic.getRandomSlangWord();
-			Map<String, Integer> quizData = dic.randomQuizDefinitions(slangWord);
+			Map<String, Integer> quiz = dic.randomQuizDefinitions(slangWord);
 
-			if (quizData == null || quizData.isEmpty()) {
+			if (quiz == null || quiz.isEmpty()) {
 				quizArea.setText("Không thể tạo câu hỏi. Từ điển rỗng hoặc slang word không hợp lệ.");
 				return;
 			}
 
 			quizArea.setText("Slang word: " + slangWord + "\nChọn định nghĩa đúng:");
-			ArrayList<Map.Entry<String, Integer>> entries = new ArrayList<>(quizData.entrySet());
+			ArrayList<Map.Entry<String, Integer>> entries = new ArrayList<>(quiz.entrySet());
 			for (int i = 0; i < entries.size(); i++) {
 				quizArea.append("\n" + (i + 1) + ". " + entries.get(i).getKey());
 			}
 
 			inputField.setEnabled(true);
-			inputField.putClientProperty("quizData", quizData);
+			inputField.putClientProperty("quiz", quiz);
 			inputField.putClientProperty("entries", entries);
 		});
 
 		inputField.addActionListener(ae -> {
 			try {
 				@SuppressWarnings("unchecked")
-				Map<String, Integer> quizData = (Map<String, Integer>) inputField.getClientProperty("quizData");
+				Map<String, Integer> quiz = (Map<String, Integer>) inputField.getClientProperty("quiz");
 				@SuppressWarnings("unchecked")
 				ArrayList<Map.Entry<String, Integer>> entries = (ArrayList<Map.Entry<String, Integer>>) inputField
 						.getClientProperty("entries");
 
-				if (quizData == null || entries == null) {
+				if (quiz == null || entries == null) {
 					quizArea.append("\n\nVui lòng nhấn 'Bắt đầu Quiz' để tạo câu hỏi mới.");
 					return;
 				}
@@ -485,7 +456,7 @@ public class SlangWordApp extends JFrame {
 					quizArea.append("\n\nVui lòng nhập một số từ 1 đến 4.");
 				} else {
 					String correctAnswer = null;
-					for (Map.Entry<String, Integer> entry : quizData.entrySet()) {
+					for (Map.Entry<String, Integer> entry : quiz.entrySet()) {
 						if (entry.getValue() == 1) {
 							correctAnswer = entry.getKey();
 							break;
