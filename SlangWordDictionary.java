@@ -1,18 +1,8 @@
 package Project;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
 
 public class SlangWordDictionary {
 	private static HashMap<String, HashSet<String>> dictionary;
@@ -56,12 +46,6 @@ public class SlangWordDictionary {
 		}
 	}
 
-	public static void printDictionary(HashMap<String, HashSet<String>> dictionary) {
-		for (Map.Entry<String, HashSet<String>> entry : dictionary.entrySet()) {
-			System.out.println("SlangWord: " + entry.getKey() + " có nghĩa là: " + entry.getValue());
-		}
-	}
-
 	public String searchSlangWord(String slangWord) {
 		searchHistory.add(slangWord);
 		if (dictionary.containsKey(slangWord)) {
@@ -96,15 +80,15 @@ public class SlangWordDictionary {
 		try {
 			dictionary.clear();
 			loadFromFile(fileName, dictionary);
-			System.out.println("Danh sách Slang Words đã được reset");
+			System.out.println("Danh sách từ điển đã được reset");
 		} catch (Exception e) {
-			System.out.println("Gặp lỗi khi reset danh sách Slang Words: " + e.getMessage());
+			System.out.println("Gặp lỗi khi reset danh sách từ điển: " + e.getMessage());
 		}
 	}
 
 	public String randomSlangWord() {
 		if (dictionary.isEmpty()) {
-			return "Danh sách Slang Words rỗng.";
+			return "Danh sách từ điển rỗng.";
 		}
 		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
 		int randomIndex = (int) (Math.random() * keys.size());
@@ -124,7 +108,7 @@ public class SlangWordDictionary {
 
 	public Map<String, Integer> randomQuizDefinitions(String slangWord) {
 		if (dictionary.isEmpty()) {
-			System.out.println("Danh sách Slang Words hiện đang trống.");
+			System.out.println("Danh sách từ điẻn đang trống.");
 			return null;
 		}
 
@@ -141,27 +125,27 @@ public class SlangWordDictionary {
 			allDefinitions.addAll(defs);
 		}
 
-		Map<String, Integer> quizMap = new LinkedHashMap<>();
-		quizMap.put(correctDefinition, 1);
+		Map<String, Integer> quiz = new LinkedHashMap<>();
+		quiz.put(correctDefinition, 1);
 
-		while (quizMap.size() < 4) {
-			int randomIndex = (int) (Math.random() * allDefinitions.size());
-			String randomDefinition = allDefinitions.get(randomIndex);
+		while (quiz.size() < 4) {
+			int index = (int) (Math.random() * allDefinitions.size());
+			String randomDefinition = allDefinitions.get(index);
 
-			if (!quizMap.containsKey(randomDefinition)) {
-				quizMap.put(randomDefinition, 0);
+			if (!quiz.containsKey(randomDefinition)) {
+				quiz.put(randomDefinition, 0);
 			}
 		}
 
-		List<Map.Entry<String, Integer>> entryList = new ArrayList<>(quizMap.entrySet());
+		List<Map.Entry<String, Integer>> entryList = new ArrayList<>(quiz.entrySet());
 		Collections.shuffle(entryList);
 
-		Map<String, Integer> shuffledQuizMap = new LinkedHashMap<>();
+		Map<String, Integer> shuffledQuiz = new LinkedHashMap<>();
 		for (Map.Entry<String, Integer> entry : entryList) {
-			shuffledQuizMap.put(entry.getKey(), entry.getValue());
+			shuffledQuiz.put(entry.getKey(), entry.getValue());
 		}
 
-		return shuffledQuizMap;
+		return shuffledQuiz;
 	}
 
 	public String getRandomDefinition() {
@@ -174,49 +158,49 @@ public class SlangWordDictionary {
 			allDefinitions.addAll(definitions);
 		}
 
-		int randomIndex = (int) (Math.random() * allDefinitions.size());
-		return allDefinitions.get(randomIndex);
+		int index = (int) (Math.random() * allDefinitions.size());
+		return allDefinitions.get(index);
 	}
 
 	public Map<String, Integer> randomQuizSlangs(String definition) {
-		Map<String, Integer> quizData = new LinkedHashMap<>();
+		Map<String, Integer> quiz = new LinkedHashMap<>();
 
 		if (dictionary.isEmpty() || definition == null || definition.isEmpty()) {
-			return quizData;
+			return quiz;
 		}
 
-		String correctSlang = null;
+		String correct = null;
 		for (Map.Entry<String, HashSet<String>> entry : dictionary.entrySet()) {
 			if (entry.getValue().contains(definition)) {
-				correctSlang = entry.getKey();
+				correct = entry.getKey();
 				break;
 			}
 		}
 
-		if (correctSlang == null) {
-			return quizData;
+		if (correct == null) {
+			return quiz;
 		}
 
-		quizData.put(correctSlang, 1);
+		quiz.put(correct, 1);
 
 		ArrayList<String> keys = new ArrayList<>(dictionary.keySet());
-		while (quizData.size() < 4) {
+		while (quiz.size() < 4) {
 			int randomIndex = (int) (Math.random() * keys.size());
 			String randomSlang = keys.get(randomIndex);
 
-			if (!quizData.containsKey(randomSlang)) {
-				quizData.put(randomSlang, 0);
+			if (!quiz.containsKey(randomSlang)) {
+				quiz.put(randomSlang, 0);
 			}
 		}
 
-		List<Map.Entry<String, Integer>> entries = new ArrayList<>(quizData.entrySet());
+		List<Map.Entry<String, Integer>> entries = new ArrayList<>(quiz.entrySet());
 		Collections.shuffle(entries);
 
 		Map<String, Integer> shuffledQuizData = new LinkedHashMap<>();
 		for (Map.Entry<String, Integer> entry : entries) {
 			shuffledQuizData.put(entry.getKey(), entry.getValue());
 		}
-
+		
 		return shuffledQuizData;
 	}
 }
